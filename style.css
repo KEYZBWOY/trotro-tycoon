@@ -49,7 +49,7 @@ h1, h2, h3 { font-family: "Anton", Impact, sans-serif; font-weight: 400; letter-
 
 /* Hero */
 .hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--line); }
-.hero .bg { position: absolute; inset: 0; background: url(media/title.webp) center/cover; opacity: .35; filter: saturate(1.1); }
+.hero .bg { position: absolute; inset: 0; background: url(media/hero.webp) center/cover; opacity: .35; filter: saturate(1.1); }
 .hero .bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, var(--ink) 18%, rgba(15,20,27,.55) 60%, rgba(15,20,27,.2)), linear-gradient(0deg, var(--ink), transparent 40%); }
 .hero .wrap { position: relative; padding: 110px 0 90px; }
 .hero h1 { font-size: clamp(56px, 11vw, 132px); margin: 22px 0 10px; }

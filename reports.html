@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Report a problem | Trotro Tycoon</title>
+<meta name="description" content="Tell us what didn't work in the Trotro Tycoon demo, and see what other players reported and what's been fixed.">
+<meta property="og:title" content="Report a problem | Trotro Tycoon">
+<meta property="og:image" content="https://keyzbwoy.github.io/trotro-tycoon/media/og.jpg">
+<link rel="icon" href="media/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
+</head>
+<body>
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="index.html">TROTRO TYCOON</a>
+    <a class="link" href="index.html#features">The game</a>
+    <a class="link" href="index.html#founders">Founders</a>
+    <a class="btn small solid" href="index.html#download">Free demo</a>
+  </div>
+</nav>
+
+<div class="wrap page-head">
+  <div class="stripe"><i></i><i></i><i></i></div>
+  <h1>Report a problem</h1>
+  <p class="intro">Something didn't work, looked wrong or ran slowly? Tell us here. Every report is read, and it shows below so you can see when it's fixed.</p>
+</div>
+
+<div class="wrap two">
+  <form class="box" id="form" autocomplete="on">
+    <label for="kind">What kind of problem</label>
+    <select id="kind" name="kind">
+      <option>Bug</option>
+      <option>Crash</option>
+      <option>Slow or stuttering</option>
+      <option>Looks wrong</option>
+      <option>Idea</option>
+      <option>Other</option>
+    </select>
+    <label for="title">In one line</label>
+    <input id="title" name="title" maxlength="120" required placeholder="e.g. Trotro got stuck at the gate">
+    <label for="details">What happened</label>
+    <textarea id="details" name="details" maxlength="3000" required placeholder="What were you doing, what did you expect, and what happened instead?"></textarea>
+    <label for="pc">Your PC (optional)</label>
+    <input id="pc" name="pc" maxlength="200" placeholder="e.g. HP laptop, Intel i5, 8 GB">
+    <label for="contact">Your email (optional, never shown)</label>
+    <input id="contact" name="contact" type="email" maxlength="120" placeholder="Only if you want a reply">
+    <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <button class="btn solid" type="submit" id="send">Send report</button>
+    <div class="msg" id="msg" role="status"></div>
+  </form>
+
+  <div class="reports">
+    <h2>What players reported</h2>
+    <div id="list"><div class="empty">Loading reports…</div></div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div><b>TROTRO TYCOON</b><br>Made in Accra, Ghana. © 2026</div>
+    <div><a href="index.html">Back to the game</a></div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var api = (window.TT || {}).reportsApi;
+  var list = document.getElementById("list");
+  var form = document.getElementById("form");
+  var msg = document.getElementById("msg");
+  var send = document.getElementById("send");
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function when(v) {
+    var d = new Date(v);
+    return isNaN(d) ? "" : d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+  }
+  function pillClass(s) {
+    return s === "Fixed" ? "Fixed" : (s === "Looking into it" ? "Looking" : "");
+  }
+  function render(items) {
+    if (!items.length) {
+      list.innerHTML = '<div class="empty">No reports yet. Be the first to tell us what didn\'t work.</div>';
+      return;
+    }
+    list.innerHTML = items.map(function (r) {
+      return '<article class="report"><div class="top">' +
+        '<h3>' + esc(r.title) + '</h3>' +
+        '<span class="pill kind">' + esc(r.kind) + '</span>' +
+        '<span class="pill ' + pillClass(r.status) + '">' + esc(r.status) + '</span></div>' +
+        '<p>' + esc(r.details) + '</p>' +
+        '<div class="meta">' + esc(r.id) + ' · ' + esc(when(r.when)) + (r.version ? ' · ' + esc(r.version) : '') + '</div>' +
+        (r.reply ? '<div class="reply"><b>Reply:</b> ' + esc(r.reply) + '</div>' : '') +
+        '</article>';
+    }).join("");
+  }
+  function load() {
+    if (!api) {
+      list.innerHTML = '<div class="empty">Reports open very soon.</div>';
+      return;
+    }
+    fetch(api).then(function (r) { return r.json(); }).then(function (d) {
+      render(d.reports || []);
+    }).catch(function () {
+      list.innerHTML = '<div class="empty">Couldn\'t load reports right now. Try again in a moment.</div>';
+    });
+  }
+  var client = "";
+  try {
+    client = localStorage.getItem("tt_client") || Math.random().toString(36).slice(2);
+    localStorage.setItem("tt_client", client);
+  } catch (e) {}
+
+  form.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    if (!api) { msg.className = "msg bad"; msg.textContent = "Reports open very soon."; return; }
+    var data = new URLSearchParams(new FormData(form));
+    data.append("version", (window.TT || {}).version || "");
+    data.append("client", client);
+    send.disabled = true;
+    send.textContent = "Sending…";
+    msg.className = "msg";
+    msg.textContent = "";
+    fetch(api, { method: "POST", body: data }).then(function (r) { return r.json(); }).then(function (d) {
+      if (d.ok) {
+        msg.className = "msg ok";
+        msg.textContent = "Thank you! Your report " + (d.id || "") + " is in.";
+        form.reset();
+        load();
+      } else {
+        msg.className = "msg bad";
+        msg.textContent = d.error || "Something went wrong. Please try again.";
+      }
+    }).catch(function () {
+      msg.className = "msg bad";
+      msg.textContent = "Couldn't send. Check your connection and try again.";
+    }).then(function () {
+      send.disabled = false;
+      send.textContent = "Send report";
+    });
+  });
+  load();
+})();
+</script>
+</body>
+</html>
